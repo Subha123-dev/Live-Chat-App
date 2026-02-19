@@ -17,7 +17,7 @@ const app = express();
 =================================*/
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://live-chat-app-frontend-t8o6.vercel.app/", // ← CHANGE THIS
+  "https://live-chat-app-frontend-t8o6.vercel.app", // ← CHANGE THIS
 ];
 
 /* ===============================
