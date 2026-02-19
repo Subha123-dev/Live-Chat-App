@@ -13,9 +13,21 @@ const agoraRoutes = require("./routes/agora");
 const app = express();
 
 /* ===============================
+   ALLOWED ORIGINS  (IMPORTANT)
+=================================*/
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://YOUR-VERCEL-URL.vercel.app", // ← CHANGE THIS
+];
+
+/* ===============================
    MIDDLEWARE
 =================================*/
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
 app.use(express.json());
 
 /* ===============================
@@ -44,8 +56,9 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
+    credentials: true
   },
 });
 
@@ -60,15 +73,12 @@ const onlineUsers = {}; // { userId: socketId }
 io.on("connection", (socket) => {
   console.log("🔌 Socket connected:", socket.id);
 
-  // Register user
   socket.on("register-user", (userId) => {
     if (!userId) return;
-
     onlineUsers[userId] = socket.id;
     console.log("✅ User registered:", userId);
   });
 
-  // Call user
   socket.on("call-user", (data) => {
     const targetSocket = onlineUsers[data.to];
 
@@ -80,47 +90,26 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Accept call
   socket.on("accept-call", (data) => {
     const targetSocket = onlineUsers[data.to];
-
-    if (targetSocket) {
-      io.to(targetSocket).emit("call-accepted", data);
-      console.log("✅ Call accepted:", data.to);
-    }
+    if (targetSocket) io.to(targetSocket).emit("call-accepted", data);
   });
 
-  // Reject call
   socket.on("reject-call", (data) => {
     const targetSocket = onlineUsers[data.to];
-
-    if (targetSocket) {
-      io.to(targetSocket).emit("call-rejected", data);
-      console.log("❌ Call rejected:", data.to);
-    }
+    if (targetSocket) io.to(targetSocket).emit("call-rejected", data);
   });
 
-  // Missed call
   socket.on("missed-call", (data) => {
     const targetSocket = onlineUsers[data.to];
-
-    if (targetSocket) {
-      io.to(targetSocket).emit("missed-call", data);
-      console.log("📴 Missed call notification sent to:", data.to);
-    }
+    if (targetSocket) io.to(targetSocket).emit("missed-call", data);
   });
 
-  // End call
   socket.on("end-call", (data) => {
     const targetSocket = onlineUsers[data.to];
-
-    if (targetSocket) {
-      io.to(targetSocket).emit("call-ended", data);
-      console.log("📴 Call ended:", data.to);
-    }
+    if (targetSocket) io.to(targetSocket).emit("call-ended", data);
   });
 
-  // Disconnect
   socket.on("disconnect", () => {
     for (const userId in onlineUsers) {
       if (onlineUsers[userId] === socket.id) {
